@@ -106,6 +106,7 @@ function expand!(D::DESPOT, b::Int, p::DESPOTPlanner)
             D.parent_b[bp] = b
             D.parent[bp] = ba
             D.Delta[bp] = D.Delta[b]+1
+            D.b_visits[bp] = 0
 
             scenario_belief = get_belief(D, bp, p.rs)
             L_0, U_0 = bounds(p.bounds, p.pomdp, scenario_belief)
