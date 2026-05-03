@@ -145,4 +145,5 @@ function Base.resize!(D::DESPOT, n::Int)
     resize!(D.U, n)
     resize!(D.l_0, n)
     resize!(D.obs, n)
+    resize!(D.b_visits, n)   # NEW
 end
