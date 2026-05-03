@@ -117,6 +117,8 @@ function backup!(D::DESPOT, b::Int, p::DESPOTPlanner)
 end
 
 function next_best(D::DESPOT, b::Int, p::DESPOTPlanner)
+
+    D.b_visits[b] += 1
     max_mu = -Inf
     best_ba = first(D.children[b])
     for ba in D.children[b]
@@ -127,6 +129,8 @@ function next_best(D::DESPOT, b::Int, p::DESPOTPlanner)
         end
     end
 
+    D.ba_visits[best_ba] += 1
+    
     max_eu = -Inf
     best_bp = first(D.ba_children[best_ba])
     for bp in D.ba_children[best_ba]
