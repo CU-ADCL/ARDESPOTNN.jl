@@ -15,7 +15,10 @@ struct DESPOT{S,A,O}
     ba_rho::Vector{Float64} # needed for backup
     ba_Rsum::Vector{Float64} # needed for backup
     ba_action::Vector{A}
-
+    
+    b_visits::Vector{Int}      # NEW: N(b)
+    ba_visits::Vector{Int}     # NEW: N(b,a)
+    
     _discount::Float64 # for inferring L in visualization
 end
 
