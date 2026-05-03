@@ -51,6 +51,8 @@ function DESPOT(p::DESPOTPlanner, b_0)
                          Float64[],
                          Float64[],
                          A[],
+                         [0],       # NEW b_visits, one root belief node
+                         Int[],     # NEW ba_visits, no action branches yet
                          discount(p.pomdp)
                  )
 end
