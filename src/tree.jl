@@ -90,6 +90,7 @@ function expand!(D::DESPOT, b::Int, p::DESPOTPlanner)
         push!(D.ba_children, [odict[o] for o in olist])
         ba = length(D.ba_children)
         push!(D.ba_action, a)
+        push!(D.ba_visits, 0)
         push!(D.children[b], ba)
         rho = rsum*discount(p.pomdp)^D.Delta[b]/p.sol.K - p.sol.lambda
         push!(D.ba_rho, rho)
