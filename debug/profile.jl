@@ -1,7 +1,7 @@
 using Revise
 
 using POMDPs
-using ARDESPOT
+using ARDESPOTNN
 using ProfileView
 using POMDPModels
 using BenchmarkTools
@@ -25,13 +25,13 @@ solver = DESPOTSolver(epsilon_0=0.0,
 p = solve(solver, pomdp)
 b0 = initial_state_distribution(pomdp)
 println("starting first")
-@time ARDESPOT.build_despot(p, b0)
-@time ARDESPOT.build_despot(p, b0)
-@time ARDESPOT.build_despot(p, b0)
-@time ARDESPOT.build_despot(p, b0)
+@time ARDESPOTNN.build_despot(p, b0)
+@time ARDESPOTNN.build_despot(p, b0)
+@time ARDESPOTNN.build_despot(p, b0)
+@time ARDESPOTNN.build_despot(p, b0)
 
 Profile.clear()
 D = @profile for i in 1:20
-    ARDESPOT.build_despot(p, b0)
+    ARDESPOTNN.build_despot(p, b0)
 end
 ProfileView.view()

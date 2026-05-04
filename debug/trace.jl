@@ -2,7 +2,7 @@ using Revise
 using TraceCalls
 
 using POMDPs
-using ARDESPOT
+using ARDESPOTNN
 using ProfileView
 using POMDPModels
 
@@ -15,4 +15,4 @@ solver = DESPOTSolver(epsilon_0=0.0,
                      )
 p = solve(solver, pomdp)
 b0 = initial_state_distribution(pomdp)
-@trace ARDESPOT.build_despot(p, b0)
+@trace ARDESPOTNN.build_despot(p, b0)

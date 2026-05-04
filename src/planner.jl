@@ -117,14 +117,22 @@ function backup!(D::DESPOT, b::Int, p::DESPOTPlanner)
 end
 
 function next_best(D::DESPOT, b::Int, p::DESPOTPlanner)
-
     D.b_visits[b] += 1
-    max_mu = -Inf
+    max_score = -Inf
     best_ba = first(D.children[b])
+    x_b = nothing
+    if p.sol.prior_exploration > 0.0
+        x_b = belief_features(p.belief_encoder, p.pomdp, get_belief(D, b, p.rs))
+    end
     for ba in D.children[b]
-        mu = D.ba_mu[ba]
-        if mu > max_mu
-            max_mu = mu
+        score = ba_U(D, b, ba, p)
+        if p.sol.prior_exploration > 0.0
+            score += p.sol.prior_exploration *
+                     action_prior(p.prior, p.pomdp, x_b, D.ba_action[ba]) *
+                     sqrt(D.b_visits[b]/(D.ba_visits[ba] + 1))
+        end
+        if score > max_score
+            max_score = score
             best_ba = ba
         end
     end
@@ -151,4 +159,12 @@ end
 
 function excess_uncertainty(D::DESPOT, b::Int, p::DESPOTPlanner)
     return D.mu[b]-D.l[b] - length(D.scenarios[b])/p.sol.K * p.sol.xi * (D.mu[1]-D.l[1])
+end
+
+function ba_U(D::DESPOT, b::Int, ba::Int, p::DESPOTPlanner)
+    weighted_sum_U = 0.0
+    for bp in D.ba_children[ba]
+        weighted_sum_U += length(D.scenarios[bp]) * D.U[bp]
+    end
+    return (D.ba_Rsum[ba] + discount(p.pomdp) * weighted_sum_U)/length(D.scenarios[b])
 end

@@ -1,4 +1,4 @@
-name = "ARDESPOT"
+name = "ARDESPOTNN"
 uuid = "d96c9ae4-3372-47d5-8a88-316ae77be8cf"
 repo = "https://github.com/JuliaPOMDP/ARDESPOT.jl"
 version = "0.3.8"

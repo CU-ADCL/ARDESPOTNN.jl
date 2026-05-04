@@ -4,7 +4,7 @@
 
 using Pkg
 Pkg.activate(".")
-using ARDESPOT
+using ARDESPOTNN
 
 Pkg.activate("pr32_benchmarks")
 using BenchmarkTools

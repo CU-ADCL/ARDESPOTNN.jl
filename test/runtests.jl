@@ -1,4 +1,4 @@
-using ARDESPOT
+using ARDESPOTNN
 using Test
 
 using POMDPs
@@ -22,21 +22,21 @@ scenarios = [i=>rand(rng, b_0) for i in 1:K]
 o = false
 b = ScenarioBelief(scenarios, rs, 0, o)
 pol = FeedWhenCrying()
-r1 = ARDESPOT.branching_sim(pomdp, pol, b, 10, (m,x)->0.0)
-r2 = ARDESPOT.branching_sim(pomdp, pol, b, 10, (m,x)->0.0)
+r1 = ARDESPOTNN.branching_sim(pomdp, pol, b, 10, (m,x)->0.0)
+r2 = ARDESPOTNN.branching_sim(pomdp, pol, b, 10, (m,x)->0.0)
 @test r1 == r2
 tval = 7.0
-r3 = ARDESPOT.branching_sim(pomdp, pol, b, 10, (m,x)->tval)
+r3 = ARDESPOTNN.branching_sim(pomdp, pol, b, 10, (m,x)->tval)
 @test r3 == r2 + tval*length(b.scenarios)
 
 scenarios = [1=>rand(rng, b_0)]
 b = ScenarioBelief(scenarios, rs, 0, false)
 pol = FeedWhenCrying()
-r1 = ARDESPOT.rollout(pomdp, pol, b, 10, (m,x)->0.0)
-r2 = ARDESPOT.rollout(pomdp, pol, b, 10, (m,x)->0.0)
+r1 = ARDESPOTNN.rollout(pomdp, pol, b, 10, (m,x)->0.0)
+r2 = ARDESPOTNN.rollout(pomdp, pol, b, 10, (m,x)->0.0)
 @test r1 == r2
 tval = 7.0
-r3 = ARDESPOT.rollout(pomdp, pol, b, 10, (m,x)->tval)
+r3 = ARDESPOTNN.rollout(pomdp, pol, b, 10, (m,x)->tval)
 @test r3 == r2 + tval
 
 # AbstractParticleBelief interface
@@ -92,15 +92,15 @@ solver = DESPOTSolver(epsilon_0=0.1,
 p = solve(solver, pomdp)
 
 b0 = initialstate(pomdp)
-D = @inferred ARDESPOT.build_despot(p, b0)
-@inferred ARDESPOT.explore!(D, 1, p)
-@inferred ARDESPOT.expand!(D, length(D.children), p)
-@inferred ARDESPOT.prune!(D, 1, p)
-@inferred ARDESPOT.find_blocker(D, length(D.children), p)
-@inferred ARDESPOT.make_default!(D, length(D.children))
-@inferred ARDESPOT.backup!(D, 1, p)
-@inferred ARDESPOT.next_best(D, 1, p)
-@inferred ARDESPOT.excess_uncertainty(D, 1, p)
+D = @inferred ARDESPOTNN.build_despot(p, b0)
+@inferred ARDESPOTNN.explore!(D, 1, p)
+@inferred ARDESPOTNN.expand!(D, length(D.children), p)
+@inferred ARDESPOTNN.prune!(D, 1, p)
+@inferred ARDESPOTNN.find_blocker(D, length(D.children), p)
+@inferred ARDESPOTNN.make_default!(D, length(D.children))
+@inferred ARDESPOTNN.backup!(D, 1, p)
+@inferred ARDESPOTNN.next_best(D, 1, p)
+@inferred ARDESPOTNN.excess_uncertainty(D, 1, p)
 @inferred action(p, b0)
 
 
@@ -115,6 +115,33 @@ solver = DESPOTSolver(epsilon_0=0.1,
 p = solve(solver, pomdp)
 a = action(p, initialstate(pomdp))
 
+# learned-prior style action selection
+encoder_called = Ref(false)
+preferred_action = Ref{Any}(nothing)
+solver = DESPOTSolver(bounds=(0.0, 0.0),
+                      prior_exploration=100.0,
+                      policy_prior=(m, x_b, a)->a == preferred_action[] ? 1.0 : 0.0,
+                      belief_encoder=(m, sb)->begin
+                          encoder_called[] = true
+                          return nothing
+                      end,
+                      rng=MersenneTwister(5)
+                     )
+p = solve(solver, pomdp)
+D = ARDESPOTNN.DESPOT(p, initialstate(pomdp))
+ARDESPOTNN.expand!(D, 1, p)
+preferred_action[] = last(D.ba_action)
+for ba in D.children[1]
+    D.ba_Rsum[ba] = 0.0
+    D.ba_visits[ba] = 0
+    for bp in D.ba_children[ba]
+        D.U[bp] = 0.0
+    end
+end
+chosen_bp = ARDESPOTNN.next_best(D, 1, p)
+@test encoder_called[]
+@test D.ba_action[D.parent[chosen_bp]] == preferred_action[]
+
 include("random_2.jl")
 
 # visualization
@@ -123,7 +150,7 @@ a, info = action_info(p, initialstate(pomdp))
 show(stdout, MIME("text/plain"), info[:tree])
 
 # from README:
-using POMDPs, POMDPModels, ARDESPOT
+using POMDPs, POMDPModels, ARDESPOTNN
 using POMDPTools
 
 pomdp = TigerPOMDP()

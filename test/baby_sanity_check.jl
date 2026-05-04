@@ -1,5 +1,5 @@
 using POMDPs
-using ARDESPOT
+using ARDESPOTNN
 using POMDPTools
 using POMDPModels
 using ProgressMeter

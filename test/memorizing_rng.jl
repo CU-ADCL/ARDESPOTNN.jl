@@ -1,4 +1,4 @@
-using ARDESPOT
+using ARDESPOTNN
 using Random
 
 mt = MersenneTwister(1)

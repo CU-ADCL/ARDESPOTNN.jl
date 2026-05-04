@@ -1,4 +1,4 @@
-module ARDESPOT
+module ARDESPOTNN
 
 using POMDPs
 using Parameters
@@ -36,6 +36,10 @@ export
     lbound,
     ubound,
     init_bound,
+    action_prior,
+    belief_features,
+    init_policy_prior,
+    init_belief_encoder,
 
     ReportWhenUsed
 
@@ -95,6 +99,15 @@ Further information can be found in the field docstrings (e.g.
     "A representation for the upper and lower bound on the discounted value (e.g. `IndependentBounds`)."
     bounds::Any                             = IndependentBounds(-1e6, 1e6)
 
+    "A learned or hand-crafted action prior used in forward search. Called as `prior(pomdp, x_b, a)`."
+    policy_prior::Any                       = nothing
+
+    "Scales the policy-prior exploration bonus in guided action selection."
+    prior_exploration::Float64              = 0.0
+
+    "Maps a `ScenarioBelief` to the feature representation `x_b` consumed by `policy_prior`. If `nothing`, the raw belief is used."
+    belief_encoder::Any                     = nothing
+
     """A default action to use if algorithm fails to provide an action because of an error.
    
     This can either be an action object, i.e. `default_action=1` if `actiontype(pomdp)==Int` or a function `f(pomdp, b, ex)` where b is the belief and ex is the exception that caused the planner to fail.
@@ -117,21 +130,26 @@ end
 include("scenario_belief.jl")
 include("default_policy_sim.jl")
 include("bounds.jl")
+include("priors.jl")
 
-struct DESPOTPlanner{P<:POMDP, B, RS<:DESPOTRandomSource, RNG<:AbstractRNG} <: Policy
+struct DESPOTPlanner{P<:POMDP, B, PR, BE, RS<:DESPOTRandomSource, RNG<:AbstractRNG} <: Policy
     sol::DESPOTSolver
     pomdp::P
     bounds::B
+    prior::PR
+    belief_encoder::BE
     rs::RS
     rng::RNG
 end
 
 function DESPOTPlanner(sol::DESPOTSolver, pomdp::POMDP)
     bounds = init_bounds(sol.bounds, pomdp, sol)
+    prior = init_policy_prior(sol.policy_prior, pomdp, sol)
+    belief_encoder = init_belief_encoder(sol.belief_encoder, pomdp, sol)
     rng = deepcopy(sol.rng)
     rs = deepcopy(sol.random_source)
     Random.seed!(rs, rand(rng, UInt32))
-    return DESPOTPlanner(deepcopy(sol), pomdp, bounds, rs, rng)
+    return DESPOTPlanner(deepcopy(sol), pomdp, bounds, prior, belief_encoder, rs, rng)
 end
 
 include("tree.jl")
